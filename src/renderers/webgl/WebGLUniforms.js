@@ -49,9 +49,11 @@
 
 import { CubeTexture } from '../../textures/CubeTexture';
 import { Texture } from '../../textures/Texture';
+import { Texture3D } from '../../textures/Texture3D';
 
 var emptyTexture = new Texture();
 var emptyCubeTexture = new CubeTexture();
+var emptyTexture3D = new Texture3D();
 
 // --- Base for inner nodes (including the root) ---
 
@@ -206,13 +208,34 @@ function setValue4fm( gl, v ) {
 
 }
 
-// Single texture (2D / Cube)
+// Single textures (2D / 3D / Cube)
 
 function setValueT1( gl, v, renderer ) {
 
 	var unit = renderer.allocTextureUnit();
 	gl.uniform1i( this.addr, unit );
-	renderer.setTexture2D( v || emptyTexture, unit );
+
+	var texture = v || emptyTexture;
+
+	if ( texture.isExtensibleTexture ) {
+		
+		renderer.setExtensibleTexture( texture, unit );
+
+	} else {
+
+		renderer.setTexture2D( texture, unit );
+
+	} 
+
+}
+
+
+function setValueT3( gl, v, renderer ) {
+
+	var unit = renderer.allocTextureUnit();
+	gl.uniform1i( this.addr, unit );
+	
+	renderer.setExtensibleTexture( v || emptyTexture3D, unit );
 
 }
 
@@ -244,8 +267,9 @@ function getSingularSetter( type ) {
 		case 0x8b5a: return setValue2fm; // _MAT2
 		case 0x8b5b: return setValue3fm; // _MAT3
 		case 0x8b5c: return setValue4fm; // _MAT4
-
+		
 		case 0x8b5e: case 0x8d66: return setValueT1; // SAMPLER_2D, SAMPLER_EXTERNAL_OES
+		case 0x8b5f: return setValueT3; // SAMPLER_3D
 		case 0x8b60: return setValueT6; // SAMPLER_CUBE
 
 		case 0x1404: case 0x8b56: return setValue1i; // INT, BOOL
@@ -302,7 +326,7 @@ function setValueM4a( gl, v ) {
 
 }
 
-// Array of textures (2D / Cube)
+// Array of textures (2D / 3D / Cube)
 
 function setValueT1a( gl, v, renderer ) {
 
@@ -313,7 +337,33 @@ function setValueT1a( gl, v, renderer ) {
 
 	for ( var i = 0; i !== n; ++ i ) {
 
-		renderer.setTexture2D( v[ i ] || emptyTexture, units[ i ] );
+		var texture = v[ i ] || emptyTexture;
+		
+		if ( texture.isExtensibleTexture ) {
+			
+			renderer.setExtensibleTexture( texture, units[ i ] );
+	
+		} else {
+	
+			renderer.setTexture2D( texture, units[ i ] );
+	
+		} 
+
+	}
+
+}
+
+
+function setValueT3a( gl, v, renderer ) {
+
+	var n = v.length,
+	units = allocTexUnits( renderer, n );
+	
+	gl.uniform1iv( this.addr, units );
+	
+	for ( var i = 0; i !== n; ++ i ) {
+
+		renderer.setExtensibleTexture( v[ i ] || emptyTexture, units[ i ] );
 
 	}
 
@@ -350,6 +400,7 @@ function getPureArraySetter( type ) {
 		case 0x8b5c: return setValueM4a; // _MAT4
 
 		case 0x8b5e: return setValueT1a; // SAMPLER_2D
+		case 0x8b5f: return setValueT3a; // SAMPLER_3D
 		case 0x8b60: return setValueT6a; // SAMPLER_CUBE
 
 		case 0x1404: case 0x8b56: return setValue1iv; // INT, BOOL

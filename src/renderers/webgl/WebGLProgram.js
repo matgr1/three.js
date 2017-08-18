@@ -289,22 +289,33 @@ function WebGLProgram( renderer, extensions, code, material, shader, parameters 
 
 	if ( material.isRawShaderMaterial ) {
 
-		prefixVertex = [
+		prefixVertex = "";
+		prefixFragment = "";
 
-			customDefines,
+		if (customDefines) {
 
-			'\n'
+			prefixVertex = [
 
-		].filter( filterEmptyLine ).join( '\n' );
+				customDefines,
 
-		prefixFragment = [
+				'\n'
 
-			customExtensions,
-			customDefines,
+			].filter( filterEmptyLine ).join( '\n' );
+			
+			if (customExtensions) {
+	
+				prefixFragment = [
+	
+					customExtensions,
+					customDefines,
+	
+					'\n'
+	
+				].filter( filterEmptyLine ).join( '\n' );
+			
+			}
 
-			'\n'
-
-		].filter( filterEmptyLine ).join( '\n' );
+		}
 
 	} else {
 

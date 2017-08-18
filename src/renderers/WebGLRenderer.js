@@ -1,4 +1,4 @@
-import { REVISION, RGBAFormat, HalfFloatType, FloatType, ByteType, UnsignedByteType, FrontFaceDirectionCW, TriangleFanDrawMode, TriangleStripDrawMode, TrianglesDrawMode, NoColors, LinearToneMapping } from '../constants';
+import { REVISION, RGBAFormat, RGBA32FFormat, HalfFloatType, FloatType, ByteType, UnsignedByteType, FrontFaceDirectionCW, TriangleFanDrawMode, TriangleStripDrawMode, TrianglesDrawMode, NoColors, LinearToneMapping } from '../constants';
 import { _Math } from '../math/Math';
 import { Matrix4 } from '../math/Matrix4';
 import { DataTexture } from '../textures/DataTexture';
@@ -250,6 +250,8 @@ function WebGLRenderer( parameters ) {
 
 	var utils;
 
+	var _isWebGL2;
+
 	function initGLContext() {
 
 		extensions = new WebGLExtensions( _gl );
@@ -265,6 +267,13 @@ function WebGLRenderer( parameters ) {
 
 			BufferGeometry.MaxIndex = 4294967296;
 
+		}
+		
+		_isWebGL2 = ( typeof WebGL2RenderingContext !== 'undefined' && _gl instanceof WebGL2RenderingContext );
+		if (_isWebGL2) {
+	
+			extensions.get( 'EXT_color_buffer_float' );
+	
 		}
 
 		utils = new WebGLUtils( _gl, extensions );
@@ -2313,6 +2322,8 @@ function WebGLRenderer( parameters ) {
 
 	}() );
 
+	this.setExtensibleTexture = textures.setExtensibleTexture;
+
 	this.setTextureCube = ( function () {
 
 		var warned = false;
@@ -2452,14 +2463,18 @@ function WebGLRenderer( parameters ) {
 
 				if ( textureFormat !== RGBAFormat && utils.convert( textureFormat ) !== _gl.getParameter( _gl.IMPLEMENTATION_COLOR_READ_FORMAT ) ) {
 
-					console.error( 'THREE.WebGLRenderer.readRenderTargetPixels: renderTarget is not in RGBA or implementation defined format.' );
-					return;
+					if ( _isWebGL2 && textureFormat !== RGBA32FFormat && extensions.get( 'EXT_color_buffer_float' ) ) {
+						
+						console.error( 'THREE.WebGLRenderer.readRenderTargetPixels: renderTarget is not in RGBA or RGBA32F or implementation defined format.' );
+						return;
+
+					}
 
 				}
 
 				if ( textureType !== UnsignedByteType && utils.convert( textureType ) !== _gl.getParameter( _gl.IMPLEMENTATION_COLOR_READ_TYPE ) && // IE11, Edge and Chrome Mac < 52 (#9513)
-					! ( textureType === FloatType && ( extensions.get( 'OES_texture_float' ) || extensions.get( 'WEBGL_color_buffer_float' ) ) ) && // Chrome Mac >= 52 and Firefox
-					! ( textureType === HalfFloatType && extensions.get( 'EXT_color_buffer_half_float' ) ) ) {
+					! ( textureType === FloatType && ( _isWebGL2 || extensions.get( 'OES_texture_float' ) || extensions.get( 'WEBGL_color_buffer_float' ) ) ) && // Chrome Mac >= 52 and Firefox
+					! ( textureType === HalfFloatType && ( _isWebGL2 || extensions.get( 'EXT_color_buffer_half_float' ) ) ) ) {
 
 					console.error( 'THREE.WebGLRenderer.readRenderTargetPixels: renderTarget is not in UnsignedByteType or implementation defined type.' );
 					return;
@@ -2468,11 +2483,19 @@ function WebGLRenderer( parameters ) {
 
 				if ( _gl.checkFramebufferStatus( _gl.FRAMEBUFFER ) === _gl.FRAMEBUFFER_COMPLETE ) {
 
+					var readTextureFormat = textureFormat;
+					
+					if (readTextureFormat == RGBA32FFormat) {
+
+						readTextureFormat = RGBAFormat;
+
+					}
+
 					// the following if statement ensures valid read requests (no out-of-bounds pixels, see #8604)
 
 					if ( ( x >= 0 && x <= ( renderTarget.width - width ) ) && ( y >= 0 && y <= ( renderTarget.height - height ) ) ) {
 
-						_gl.readPixels( x, y, width, height, utils.convert( textureFormat ), utils.convert( textureType ), buffer );
+						_gl.readPixels( x, y, width, height, utils.convert( readTextureFormat ), utils.convert( textureType ), buffer );
 
 					}
 
