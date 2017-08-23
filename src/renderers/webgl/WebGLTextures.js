@@ -239,9 +239,9 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 			}
 			
 			state.activeTexture( _gl.TEXTURE0 + slot );
-			state.bindTexture( texture.getGlTextureTarget(_gl), textureProperties.__webglTexture );
+			state.bindTexture( texture.getGlTarget(_gl), textureProperties.__webglTexture );
 
-			texture.uploadTexture(_gl, textureProperties.__webglTexture, utils );	
+			texture.upload(_gl, textureProperties.__webglTexture, utils );	
 			
 			textureProperties.__version = texture.version;
 
@@ -251,7 +251,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 		}	
 					
 		state.activeTexture( _gl.TEXTURE0 + slot );
-		state.bindTexture( texture.getGlTextureTarget(_gl), textureProperties.__webglTexture );
+		state.bindTexture( texture.getGlTarget(_gl), textureProperties.__webglTexture );
 
 	}
 

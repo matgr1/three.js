@@ -42,7 +42,7 @@ Texture3D.prototype.upload = function (_gl, glTexture, utils) {
     _gl.pixelStorei(_gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha ? 1 : 0);
     _gl.pixelStorei(_gl.UNPACK_ALIGNMENT, this.unpackAlignment);
 
-    var textureType = this.getGlTextureTarget(_gl);
+    var textureType = this.getGlTarget(_gl);
 
     _gl.texParameteri(textureType, _gl.TEXTURE_WRAP_S, utils.convert(this.wrapS));
     _gl.texParameteri(textureType, _gl.TEXTURE_WRAP_T, utils.convert(this.wrapT));
